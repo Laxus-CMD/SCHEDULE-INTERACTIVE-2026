@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S-STEM 12-E — Term 3 Schedule</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Instrument Sans', Arial, sans-serif;
+      background: #f0f2f5;
+      padding: 24px 16px;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    header h1 {
+      font-size: 22px;
+      color: #1a1a2e;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    header p {
+      color: #666;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #444;
+      background: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .wrapper { overflow-x: auto; }
+
+    .schedule {
+      display: grid;
+      grid-template-columns: 64px repeat(5, 1fr);
+      background: #e2e6ea;
+      gap: 1px;
+      border-radius: 10px;
+      overflow: hidden;
+      min-width: 680px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+
+    .hdr {
+      background: #1a1a2e;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 42px;
+      letter-spacing: 1px;
+    }
+
+    .time-cell {
+      background: #f8f9fa;
+      font-size: 10px;
+      color: #888;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 2px 6px 0 0;
+      border-right: 2px solid #dee2e6;
+    }
+    .time-cell.on-hour {
+      color: #555;
+      font-weight: 600;
+      font-size: 11px;
+      border-top: 1px solid #ccc;
+    }
+
+    .grid-cell { background: #fff; }
+    .grid-cell.on-hour { border-top: 1px solid #e0e0e0; }
+    .grid-cell.alt { background: #fafafa; }
+
+    .class-block {
+      border-radius: 5px;
+      padding: 5px 7px;
+      cursor: pointer;
+      overflow: hidden;
+      margin: 2px;
+      transition: filter 0.15s, transform 0.1s;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+      position: relative;
+    }
+    .class-block:hover {
+      filter: brightness(1.1);
+      transform: scale(1.015);
+      z-index: 10;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    }
+    .class-block:active { transform: scale(0.99); }
+    .block-name { font-size: 11px; font-weight: 700; color: #fff; line-height: 1.25; }
+    .block-time { font-size: 10px; color: rgba(255,255,255,0.82); margin-top: 2px; }
+    .block-mode { font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 1px; font-style: italic; }
+    .block-pin { position: absolute; bottom: 4px; right: 6px; font-size: 13px; opacity: 0.6; }
+
+    .c-mil      { background: linear-gradient(135deg, #2980b9, #3498DB); }
+    .c-genbio   { background: linear-gradient(135deg, #219a52, #27AE60); }
+    .c-lit      { background: linear-gradient(135deg, #7d3c98, #9B59B6); }
+    .c-cl6      { background: linear-gradient(135deg, #ca6f1e, #E67E22); }
+    .c-entrep   { background: linear-gradient(135deg, #d68910, #F39C12); }
+    .c-research { background: linear-gradient(135deg, #c0392b, #E74C3C); }
+    .c-homeroom { background: linear-gradient(135deg, #626567, #7F8C8D); }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(3px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 24px 24px;
+      max-width: 420px;
+      width: 92%;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.3);
+      animation: popIn 0.18s ease;
+      position: relative;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.88); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px; right: 16px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #666;
+      transition: background 0.15s;
+    }
+    .modal-close:hover { background: #e0e0e0; color: #111; }
+
+    .modal-color-bar { height: 6px; border-radius: 3px; margin-bottom: 16px; }
+    .modal-title { font-size: 17px; font-weight: 700; color: #111; line-height: 1.3; margin-bottom: 14px; }
+    .modal-info { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555; margin-bottom: 8px; }
+    .modal-info .icon { font-size: 15px; }
+    .modal-divider { border: none; border-top: 1px solid #eee; margin: 16px 0; }
+
+    .zoom-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      background: #2D8CFF;
+      color: white;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      transition: background 0.15s, transform 0.1s;
+      margin-bottom: 8px;
+    }
+    .zoom-btn:hover { background: #1a7ce0; }
+    .zoom-btn:active { transform: scale(0.98); }
+    .zoom-btn:last-of-type { margin-bottom: 0; }
+
+    /* Split zoom buttons for E1/E2 */
+    .zoom-btn-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 0;
+    }
+    .zoom-btn-split {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex: 1;
+      padding: 12px 8px;
+      background: #2D8CFF;
+      color: white;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .zoom-btn-split:hover { background: #1a7ce0; }
+    .zoom-btn-split:active { transform: scale(0.98); }
+    .zoom-btn-split .class-label {
+      font-size: 11px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .placeholder-note { text-align: center; font-size: 11px; color: #aaa; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>S-STEM 12-E Term 3 Schedule BANGGGGG</h1>
+  <p>AY 2025–2026 | Click any class to open its Zoom link</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#3498DB"></div>MIL</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#27AE60"></div>GenBio 2</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#9B59B6"></div>21st Cent Lit</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#E67E22"></div>Christian Living 6</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#F39C12"></div>Entrepreneurship</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#E74C3C"></div>Research Project</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7F8C8D"></div>Homeroom</div>
+</div>
+
+<div class="wrapper">
+  <div class="schedule" id="grid"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-color-bar" id="mBar"></div>
+    <div class="modal-title" id="mTitle"></div>
+    <div class="modal-info"><span class="icon">⏰</span><span id="mTime"></span></div>
+    <div class="modal-info"><span class="icon">📡</span><span id="mMode"></span></div>
+    <div class="modal-info" id="mRoomRow" style="display:none"><span class="icon">📍</span><span id="mRoom"></span></div>
+    <hr class="modal-divider">
+    <div id="mLinkArea"></div>
+    <p class="placeholder-note" id="mNote"></p>
+  </div>
+</div>
+
+<script>
+const GRID_START_H = 7, GRID_START_M = 30;
+const GRID_END_H   = 18, GRID_END_M   = 30;
+const SLOT_MIN = 15;
+
+const CLASSES = [
+  // ── MONDAY ──
+  { col:2, sh:7,  sm:30, eh:9,  em:30, name:"Media and Information Literacy",                              short:"MIL",              mode:"In-person",    room:"",              color:"c-mil",      hex:"#3498DB", zoom:"https://zoom.us/j/2515331184?pwd=7AOx0S1lWRcnu6Svj9JPKYlPu41aua.1" },
+  { col:2, sh:11, sm:30, eh:13, em:0,  name:"General Biology 2 (Laboratory)",                              short:"GenBio 2 Lab",     mode:"In-person",    room:"MRR E210/E211", color:"c-genbio",   hex:"#27AE60",
+    zoomE1:"https://zoom.us/j/PLACEHOLDER_GENBIO_LAB_E1",
+    zoomE2:"https://zoom.us/j/PLACEHOLDER_GENBIO_LAB_E2",
+    splitZoom: true
+  },
+  { col:2, sh:14, sm:30, eh:17, em:0,  name:"21st Century Literature from the Philippines and the World", short:"21st Cent Lit",    mode:"In-person",    room:"",              color:"c-lit",      hex:"#9B59B6", zoom:"https://zoom.us/j/PLACEHOLDER_LIT" },
+
+  // ── TUESDAY ──
+  { col:3, sh:8,  sm:15, eh:9,  em:30, name:"Christian Living 6",                                         short:"Christian Living 6", mode:"In-person",  room:"",              color:"c-cl6",      hex:"#E67E22", zoom:"https://zoom.us/j/PLACEHOLDER_CL6" },
+  { col:3, sh:11, sm:0,  eh:12, em:15, name:"Entrepreneurship",                                            short:"Entrepreneurship", mode:"In-person",    room:"",              color:"c-entrep",   hex:"#F39C12", zoom:"https://zoom.us/j/PLACEHOLDER_ENTREP" },
+  { col:3, sh:13, sm:0,  eh:14, em:15, name:"Research Project",                                            short:"Research Project", mode:"In-person",    room:"",              color:"c-research", hex:"#E74C3C", zoom:"https://zoom.us/j/PLACEHOLDER_RESEARCH" },
+  { col:3, sh:14, sm:30, eh:16, em:30, name:"General Biology 2 (Lecture)",                                 short:"GenBio 2 Lecture", mode:"In-person",    room:"",              color:"c-genbio",   hex:"#27AE60", zoom:"https://zoom.us/j/PLACEHOLDER_GENBIO_LEC" },
+
+  // ── WEDNESDAY ──
+  { col:4, sh:8,  sm:15, eh:9,  em:45, name:"21st Century Literature from the Philippines and the World", short:"21st Cent Lit",    mode:"Asynchronous", room:"",              color:"c-lit",      hex:"#9B59B6", zoom:"https://zoom.us/j/PLACEHOLDER_LIT" },
+  { col:4, sh:15, sm:0,  eh:16, em:30, name:"General Biology 2 (Lecture)",                                 short:"GenBio 2 Lecture", mode:"In-person",    room:"",              color:"c-genbio",   hex:"#27AE60", zoom:"https://zoom.us/j/PLACEHOLDER_GENBIO_LEC" },
+
+  // ── THURSDAY ──
+  { col:5, sh:7,  sm:30, eh:9,  em:30, name:"Media and Information Literacy",                              short:"MIL",              mode:"Sync Online",  room:"",              color:"c-mil",      hex:"#3498DB", zoom:"https://zoom.us/j/PLACEHOLDER_MIL" },
+  { col:5, sh:13, sm:30, eh:14, em:0,  name:"Homeroom",                                                    short:"Homeroom",         mode:"In-person",    room:"",              color:"c-homeroom", hex:"#7F8C8D", zoom:"https://zoom.us/j/PLACEHOLDER_HOMEROOM" },
+  { col:5, sh:14, sm:30, eh:17, em:0,  name:"21st Century Literature from the Philippines and the World", short:"21st Cent Lit",    mode:"Sync Online",  room:"",              color:"c-lit",      hex:"#9B59B6", zoom:"https://zoom.us/j/PLACEHOLDER_LIT" },
+  { col:5, sh:17, sm:0,  eh:18, em:15, name:"Entrepreneurship",                                            short:"Entrepreneurship", mode:"Asynchronous", room:"",              color:"c-entrep",   hex:"#F39C12", zoom:"https://zoom.us/j/PLACEHOLDER_ENTREP" },
+
+  // ── FRIDAY ──
+  { col:6, sh:11, sm:0,  eh:12, em:15, name:"Entrepreneurship",                                            short:"Entrepreneurship", mode:"Sync Online",  room:"",              color:"c-entrep",   hex:"#F39C12", zoom:"https://zoom.us/j/PLACEHOLDER_ENTREP" },
+  { col:6, sh:13, sm:0,  eh:14, em:15, name:"Research Project",                                            short:"Research Project", mode:"Sync Online",  room:"",              color:"c-research", hex:"#E74C3C", zoom:"https://zoom.us/j/PLACEHOLDER_RESEARCH" },
+  { col:6, sh:14, sm:30, eh:16, em:0,  name:"General Biology 2 (Lecture)",                                 short:"GenBio 2 Lecture", mode:"Sync Online",  room:"",              color:"c-genbio",   hex:"#27AE60", zoom:"https://zoom.us/j/PLACEHOLDER_GENBIO_LEC" },
+  { col:6, sh:17, sm:0,  eh:18, em:15, name:"Media and Information Literacy",                              short:"MIL",              mode:"Asynchronous", room:"",              color:"c-mil",      hex:"#3498DB", zoom:"https://zoom.us/j/PLACEHOLDER_MIL" },
+];
+
+function fmt(h, m) {
+  const p = h >= 12 ? 'PM' : 'AM';
+  const d = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return `${d}:${String(m).padStart(2,'0')} ${p}`;
+}
+function toSlot(h, m) {
+  return ((h - GRID_START_H) * 60 + (m - GRID_START_M)) / SLOT_MIN;
+}
+const totalSlots = toSlot(GRID_END_H, GRID_END_M);
+
+const grid = document.getElementById('grid');
+const DAYS = ['TIME','MON','TUE','WED','THU','FRI'];
+
+DAYS.forEach(d => {
+  const el = document.createElement('div');
+  el.className = 'hdr';
+  el.textContent = d;
+  grid.appendChild(el);
+});
+
+for (let s = 0; s < totalSlots; s++) {
+  const totalMin = GRID_START_H * 60 + GRID_START_M + s * SLOT_MIN;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  const onHour = m === 0;
+  const altHour = Math.floor((s * SLOT_MIN) / 60) % 2 === 1;
+
+  const lbl = document.createElement('div');
+  lbl.className = 'time-cell' + (onHour ? ' on-hour' : '');
+  lbl.style.gridColumn = '1';
+  lbl.style.gridRow    = `${s + 2}`;
+  lbl.textContent = onHour ? fmt(h, m) : (m === 30 ? fmt(h, m) : '');
+  grid.appendChild(lbl);
+
+  for (let col = 2; col <= 6; col++) {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell' + (onHour ? ' on-hour' : '') + (altHour ? ' alt' : '');
+    cell.style.gridColumn = `${col}`;
+    cell.style.gridRow    = `${s + 2}`;
+    grid.appendChild(cell);
+  }
+}
+
+CLASSES.forEach(cls => {
+  const startSlot = toSlot(cls.sh, cls.sm);
+  const endSlot   = toSlot(cls.eh, cls.em);
+  const span = endSlot - startSlot;
+
+  const block = document.createElement('div');
+  block.className = `class-block ${cls.color}`;
+  block.style.gridColumn = `${cls.col}`;
+  block.style.gridRow    = `${startSlot + 2} / span ${span}`;
+  block.style.zIndex     = '5';
+
+  block.innerHTML = `
+    <div class="block-name">${cls.short}</div>
+    <div class="block-time">${fmt(cls.sh, cls.sm)}–${fmt(cls.eh, cls.em)}</div>
+    <div class="block-mode">${cls.mode}</div>
+    <div class="block-pin">🔗</div>
+  `;
+  block.addEventListener('click', () => openModal(cls));
+  grid.appendChild(block);
+});
+
+function openModal(cls) {
+  document.getElementById('mBar').style.background = cls.hex;
+  document.getElementById('mTitle').textContent = cls.name;
+  document.getElementById('mTime').textContent  = `${fmt(cls.sh, cls.sm)} – ${fmt(cls.eh, cls.em)}`;
+  document.getElementById('mMode').textContent  = cls.mode;
+
+  const roomRow = document.getElementById('mRoomRow');
+  if (cls.room) {
+    document.getElementById('mRoom').textContent = cls.room;
+    roomRow.style.display = 'flex';
+  } else {
+    roomRow.style.display = 'none';
+  }
+
+  const linkArea = document.getElementById('mLinkArea');
+
+  if (cls.splitZoom) {
+    const e1IsPlaceholder = cls.zoomE1.includes('PLACEHOLDER');
+    const e2IsPlaceholder = cls.zoomE2.includes('PLACEHOLDER');
+    linkArea.innerHTML = `
+      <div class="zoom-btn-group">
+        <a class="zoom-btn-split" href="${cls.zoomE1}" target="_blank">
+          <span>🎥</span>
+          <span>Join Zoom</span>
+          <span class="class-label">E1</span>
+        </a>
+        <a class="zoom-btn-split" href="${cls.zoomE2}" target="_blank">
+          <span>🎥</span>
+          <span>Join Zoom</span>
+          <span class="class-label">E2</span>
+        </a>
+      </div>
+    `;
+    document.getElementById('mNote').textContent =
+      (e1IsPlaceholder || e2IsPlaceholder) ? 'LEO ANDREIIIII' : '';
+  } else {
+    const isPlaceholder = cls.zoom.includes('PLACEHOLDER');
+    linkArea.innerHTML = `
+      <a class="zoom-btn" href="${cls.zoom}" target="_blank">
+        <span>🎥</span> Join Zoom Meeting
+      </a>
+    `;
+    document.getElementById('mNote').textContent = isPlaceholder ? 'LEO ANDREIIIII' : '';
+  }
+
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
